@@ -40,4 +40,48 @@ def checkNeighbors(m: List[String], row: Int, mtch: Match): Boolean =
 
   aboveBelow || leftRight
 
+
+@main def findGearRatios: Unit =
+  val lines = Source.fromFile("input").getLines.toList
+  val matches = lines.map(x => "\\d+".r.findAllMatchIn(x).toList)
+  val res = lines
+    .zipWithIndex
+    .map((line, rowNum) =>
+      checkGears(line, matches, rowNum)
+    ).sum
+
+  println(res)
+
   
+def checkGears(row: String, matches: List[List[Match]], rowNum: Int): Int =
+  val gearIdxs: List[Int] = row.zipWithIndex.filter(_._1 == '*').map(_._2).toList
+  val allGearRatios = gearIdxs.map(gearIdx =>
+      val aboveAdjacents = if rowNum > 0 then matches(rowNum - 1)
+        .filter(mtch =>
+          mtch.end == gearIdx
+          || mtch.start == gearIdx + 1
+          || mtch.start <= gearIdx && mtch.end > gearIdx
+        ).map(_.matched.toInt)
+        else List()
+
+      val belowAdjacents = if rowNum < matches.size - 1 then matches(rowNum + 1)
+        .filter(mtch =>
+          mtch.end == gearIdx
+          || mtch.start == gearIdx + 1
+          || mtch.start <= gearIdx && mtch.end > gearIdx
+        ).map(_.matched.toInt)
+        else List()
+
+      val sameRowAdjacents = matches(rowNum)
+        .filter(mtch =>
+          mtch.start == gearIdx + 1
+          || mtch.end == gearIdx
+        ).map(_.matched.toInt)
+
+      val allAdjacents = aboveAdjacents ++ belowAdjacents ++ sameRowAdjacents
+
+      if allAdjacents.size == 2 then allAdjacents.product else 0
+  )
+  
+  allGearRatios.sum
+
